@@ -61,7 +61,7 @@ void acakPlayer(int *player, char (*nama)[32]) {
 	}
 }
 
-void mulaiGame(int *player, char (*nama)[32], int *max) {
+void mulaiGame(int *player, char (*nama)[32], int *max, FILE *write) {
 	srand(time(0));
 	acakPlayer(player, nama);
 	
@@ -88,6 +88,16 @@ void mulaiGame(int *player, char (*nama)[32], int *max) {
 		
 		if(input == bomb) {
 			printf("%s KALAH\n", nama[i]);
+			
+			time_t t;
+			t = time(NULL);
+			char *date = ctime(&t); // has new line in it
+			
+			fprintf(write, "===========================\n");
+			fprintf(write, "%s\n", date);
+			fprintf(write, "Kalah: %s\n", nama[i]);
+			fprintf(write, "===========================\n");
+			
 			break;
 		} else {
 			if(input > bomb) {
@@ -101,7 +111,20 @@ void mulaiGame(int *player, char (*nama)[32], int *max) {
 	}	
 }
 
+void checkDatabaseExist(FILE *database) {
+	if(database == NULL) {
+		database = fopen("database.bin", "ab");
+	}
+	
+	fseek(database, 0, SEEK_END);
+	if(ftell(database) == 0) fprintf(database, "HISTORY PERMAINAN\n");
+}
+
+
 int main() {
+
+	FILE *database;
+	
 	bool mainLagi = true;
 	
 	while(mainLagi) {
@@ -133,7 +156,12 @@ int main() {
 				getchar();
 			}
 			
-			mulaiGame(&player, nama, &max);
+			database = fopen("database.bin", "ab+");
+			
+			checkDatabaseExist(database);
+			
+			mulaiGame(&player, nama, &max, database);
+			fclose(database);
 			
 		} else if(angka == 3) aboutMe();
 		else puts("Pilih 1 - 3 yaa");
@@ -142,5 +170,6 @@ int main() {
 		scanf("%d", &mainLagi);
 		getchar();
 	}
+	
 	return 0;
 }

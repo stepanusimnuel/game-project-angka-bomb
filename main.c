@@ -147,6 +147,7 @@ void cariPlayerHistory() {
 	char s[100];
 	char blank[2];
 	char time[100];
+	int loses = 0;
 	int count = 0;
 	
 	printf("\nHISTORY PERMAINAN PLAYER '%s'\n", nama);
@@ -166,17 +167,22 @@ void cariPlayerHistory() {
 			printf("%s\n", time);
 			printf("\nKalah: %s\n", nama);
 			printf("===========================\n");
-			count++;
+			loses++;
 		}
+		
+		if(!strstr(time, "=======") && !strstr(time, "HISTORY PERMAINAN")) count++;
 	}
 	fclose(database);
 	
-	if(count == 0) {
+	if(loses == 0) {
 		printf("\nPLAYER TIDAK DITEMUKAN\n");
 		return;
 	}
 	
-	printf("\n%s kalah sebanyak %d kali\n", nama, count);
+	float loseRate = (float)loses / count * 100.0;
+	printf("\n%s kalah sebanyak %d kali dari %d pertandingan\n", nama, loses, count);
+	printf("%s's Win Rate: %.1f%%\n", nama, 100.0 - loseRate);
+	printf("%s's Lose Rate: %.1f%%\n", nama, loseRate);
 }
 
 void reverseHistory() {
@@ -304,9 +310,9 @@ int main() {
 			
 		} else if(angka == 3) tampilHistory(database);
 		else if(angka == 4) aboutMe();
-		else puts("Pilih 1 - 3 yaa");
+		else puts("Pilih 1 - 4 yaa");
 		
-		printf("\ningin kembali ke menu? 1 jika ya, lainnya jika tidak\n");
+		printf("\ningin kembali ke menu? 1 jika ya, 0 jika tidak\n");
 		getInput(&mainLagi);
 	}
 	

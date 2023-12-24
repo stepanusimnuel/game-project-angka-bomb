@@ -140,9 +140,64 @@ void checkDatabaseExist(FILE *database) {
 	if(ftell(database) == 0) fprintf(database, "HISTORY PERMAINAN\n");
 }
 
+void cariPlayerHistory() {
+	char nama[32];
+	printf("\nMasukkan nama player: ");
+	getInputStr(&nama);
+	char s[100];
+	char blank[2];
+	char time[100];
+	int count = 0;
+	
+	printf("\nHISTORY PERMAINAN PLAYER '%s'\n", nama);
+	FILE *database = fopen("database.bin", "rb");
+	
+	while(fgets(time, sizeof(time), database) != NULL) {
+		time[strlen(time) - 1] = '\0';
+		fgets(blank, sizeof(blank), database);
+		fgets(s, sizeof(s), database);
+		s[strlen(s) - 1] = '\0';
+		
+		char *isExist;
+		isExist = strstr(s, nama);
+		
+		if(isExist != NULL) {
+			printf("===========================\n");
+			printf("%s\n", time);
+			printf("\nKalah: %s\n", nama);
+			printf("===========================\n");
+			count++;
+		}
+	}
+	fclose(database);
+	
+	if(count == 0) {
+		printf("\nPLAYER TIDAK DITEMUKAN\n");
+		return;
+	}
+	
+	printf("\n%s kalah sebanyak %d kali\n", nama, count);
+}
+
+void reverseHistory() {
+	FILE *database = fopen("database.bin", "rb");
+	char read[100];
+	fgets(read, sizeof(read), database);
+	printf("%s", read);
+	
+	char lines[5000][100];
+	int count = 0;
+	
+	while(fgets(lines[count], sizeof(lines[count]), database) != NULL) count++;
+	fclose(database);
+	
+	for(int i = count - 5; i >= 0; i -= 5) {
+		for(int j = 0; j < 5; j++) printf("%s", lines[i + j]);
+	}
+}
+
 void tampilHistory() {
 	FILE *database = fopen("database.bin", "rb");
-	char clear = 'n';
 	char read[255];
 	printf("\n");
 	
@@ -156,17 +211,39 @@ void tampilHistory() {
 		return;
 	}
 	
-	while(fgets(read, sizeof(read), database)) printf("%s", read);
+	int pilihanSort;
+	notValidSort:
+	printf("1. Tampilkan berdasarkan pertandingan terdahulu\n");
+	printf("2. Tampilkan berdasarkan pertandingan terbaru\n");
+	printf("Pilih [1-2]: ");
+	getInput(&pilihanSort);
 	
+	if(pilihanSort == 1) {
+		while(fgets(read, sizeof(read), database)) printf("%s", read);
+	} else if(pilihanSort == 2) reverseHistory(database);
+	else goto notValidSort;
+	
+	int pilihanLanjutan;
 	notValid:
-	printf("\nHapus History? [y/n] ");
-	scanf("%c", &clear);
-	getchar();
+	printf("\n1. Cari History Player Tertentu\n");
+	printf("2. Hapus History\n");
+	printf("3. Lanjut\n");
+	printf("Pilih [1-3]: ");
+	getInput(&pilihanLanjutan);
 	
-	if(clear == 'y') {
-		hapusDatabase(database, "hapus");
-	} else if(clear != 'n') goto notValid;
-
+	if(pilihanLanjutan == 1) cariPlayerHistory();
+	else if(pilihanLanjutan == 2) {
+		char clear = 'n';
+		notValidHistory:
+		printf("Apakah anda yakin? [y/n] ");
+		scanf("%c", &clear);
+		getchar();
+		
+		if(clear == 'y') hapusDatabase(database, "hapus");
+		else if(clear != 'n') goto notValidHistory;
+	} else if(pilihanLanjutan == 3) return;
+	else goto notValid;
+	
 	fclose(database);
 }
 
@@ -219,7 +296,6 @@ int main() {
 			printf("Range permainan angka bomb: 1 - %d\n", max);
 			
 			database = fopen("database.bin", "ab+");
-			
 			checkDatabaseExist(database);
 			
 			mulaiGame(&player, nama, &max, database);
@@ -239,4 +315,7 @@ int main() {
 	return 0;
 }
 
-
+//Permainan Angka Bomb adalah permainan tebak angka (multiplayer) di mana terdapat sebuah bilangan random (oleh moderator) dari range tertentu (biasanya 0-100) yang tidak boleh disebutkan oleh pemain. Angka yang tidak boleh disebutkan itulah yang disebut "angka bomb". Untuk lebih jelasnya silakan nonton video berikut.
+//https://www.tiktok.com/@coinfamily_/video/7291263587811724550?is_from_webapp=1&sender_device=pc&web_id=7306186663783613953
+//
+//Permainan yang saya buat kurang lebih demikian dengan sedikit tambahan. Salah satunya adalah range angka bisa ditentukan kesepakatan pemain. Tambahan pula, untuk giliran menebak angka, di tentukan random oleh gamenya (seperti hompimpa untuk menentukan giliran). Selain itu, terdapat fitur history yang dapat membantu user melihat siapa yang kalah di waktu tertentu. History tidak menunjukkan yang menang sebab jika permainan dimainkan oleh lebih dari 2 orang, ada banyak pemenang. History akan terhapus otomatis bila sudah melebihi 5000 karakter. Selain history, user dapat memilih pilihan lain seperti cara bermain dan tentang creator.
